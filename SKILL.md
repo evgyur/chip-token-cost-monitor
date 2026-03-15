@@ -13,13 +13,27 @@ metadata:
 
 ## Что делает
 - считает usage по всем agent stores из `~/.openclaw/agents/*/sessions/*`
+- автоматически находит все локальные agents и session stores
 - агрегирует токены по `provider / api / model`
 - считает `Known cost` только по известным pricing map
 - отдельно показывает `Unpriced tokens`, если для части usage нет цены
 - умеет отчёты за `24h`, `today`, `week`
 
-## Основной файл
+## Основные файлы
 - `monitor.py`
+- `onboarding_check.py`
+
+## Быстрый onboarding
+```bash
+python3 onboarding_check.py
+python3 monitor.py --period 24h --dry-run
+```
+
+`onboarding_check.py` должен подтвердить, что skill видит:
+- `~/.openclaw/agents/`
+- все agent directories
+- `sessions.json`
+- `*.jsonl` usage rows
 
 ## Быстрые команды
 ```bash
@@ -43,6 +57,7 @@ python3 monitor.py --period week --dry-run
 - `references/model-aliases.md`
 
 ## Quick test checklist
+- [ ] `python3 onboarding_check.py` показывает найденные agents и sessions
 - [ ] `python3 monitor.py --period 24h --dry-run` отрабатывает без traceback
 - [ ] в отчёте есть `Known cost`
 - [ ] если есть неизвестные модели, они попадают в `Unpriced tokens`
