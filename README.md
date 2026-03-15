@@ -1,6 +1,25 @@
 # chip-token-cost-monitor
 
+![OpenClaw](https://img.shields.io/badge/OpenClaw-skill-6f42c1)
+![Public Repo](https://img.shields.io/badge/repo-public-2da44e)
+![Python](https://img.shields.io/badge/python-3.x-blue)
+![Status](https://img.shields.io/badge/status-working-brightgreen)
+
 Public OpenClaw skill for token and cost reporting across all agents/providers.
+
+## Quick start
+
+```bash
+cd /opt/clawd-workspace/skills/public/chip-token-cost-monitor
+python3 onboarding_check.py
+python3 monitor.py --period 24h --dry-run
+```
+
+In under a minute, this verifies that the skill can see:
+- all local OpenClaw agents
+- all indexed sessions
+- raw session jsonl files
+- usage rows with `totalTokens`
 
 ## What it does
 - reads usage from `~/.openclaw/agents/*/sessions/*.jsonl`
