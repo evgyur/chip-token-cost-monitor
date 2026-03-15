@@ -7,6 +7,8 @@
 
 Public OpenClaw skill for token and cost reporting across all agents/providers.
 
+![Example 24h report](assets/example-report-24h.jpg)
+
 ## Quick start
 
 ```bash
