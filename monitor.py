@@ -257,6 +257,7 @@ class UsageMonitor:
                             'sessionKey': session_key,
                             'timestamp': dt.isoformat(),
                             'timestampMs': int(dt.timestamp() * 1000),
+                            'seq': line_no,
                             'provider': provider,
                             'api': api,
                             'model': model,
@@ -360,20 +361,37 @@ class UsageMonitor:
         # Filter by period
         start_ms = int(start_time.timestamp() * 1000)
         filtered_sessions = [s for s in all_data.get('sessions', []) if (s.get('updatedAt') or 0) >= start_ms]
-        usage_messages = [m for m in all_data.get('usage_messages', []) if (m.get('timestampMs') or 0) >= start_ms]
+        usage_messages_all = sorted(
+            all_data.get('usage_messages', []),
+            key=lambda m: (m.get('sessionKey') or '', m.get('provider') or '', m.get('api') or '', m.get('model') or '', m.get('timestampMs') or 0, m.get('seq') or 0)
+        )
 
-        # Recalculate stats for filtered period from message-level usage (truth source)
-        total_tokens = sum(m.get('totalTokens') or 0 for m in usage_messages)
-        active_session_keys = {m.get('sessionKey') for m in usage_messages if (m.get('totalTokens') or 0) > 0}
+        # Delta accounting: totalTokens in jsonl is cumulative-ish inside a session/model stream.
+        deltas = []
+        prev_totals = {}
+        for m in usage_messages_all:
+            key = (m.get('sessionKey'), m.get('provider'), m.get('api'), m.get('model'))
+            current_total = int(m.get('totalTokens') or 0)
+            prev_total = prev_totals.get(key)
+            if prev_total is None:
+                delta = current_total
+            else:
+                delta = current_total - prev_total if current_total >= prev_total else current_total
+            prev_totals[key] = current_total
+            if (m.get('timestampMs') or 0) >= start_ms and delta > 0:
+                deltas.append({**m, 'deltaTokens': delta})
+
+        total_tokens = sum(m.get('deltaTokens') or 0 for m in deltas)
+        active_session_keys = {m.get('sessionKey') for m in deltas if (m.get('deltaTokens') or 0) > 0}
         active_sessions = len(active_session_keys)
 
-        # Group by provider+model for filtered data
+        # Group by provider/api/model for filtered data
         model_stats = {}
-        for m in usage_messages:
+        for m in deltas:
             model = m.get('model', 'unknown')
             provider = m.get('provider') or 'unknown'
             api = m.get('api') or 'unknown'
-            tokens = m.get('totalTokens') or 0
+            tokens = m.get('deltaTokens') or 0
             key = (provider, api, model)
             if key not in model_stats:
                 model_stats[key] = {'tokens': 0, 'sessions': set(), 'provider': provider, 'api': api, 'model': model}
