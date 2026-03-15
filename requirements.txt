@@ -1,0 +1,4 @@
+rich>=13.0.0
+pillow>=10.0.0
+telethon>=1.30.0
+pytz>=2023.3
